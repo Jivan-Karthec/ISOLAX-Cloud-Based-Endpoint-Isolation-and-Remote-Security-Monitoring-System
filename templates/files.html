@@ -1,0 +1,134 @@
+{{define "files.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Isolax • Files</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<!-- Top bar -->
+<div class="p-4 border-b border-slate-800 flex justify-between items-center">
+  <h1 class="text-xl font-semibold text-cyan-400">Files • {{.ClientID}}</h1>
+  <a href="/viewer?client={{.ClientID}}" class="text-slate-300 text-sm">← Back to Viewer</a>
+</div>
+
+<div class="p-4 space-y-4">
+
+  <!-- Path form + Back button -->
+  <form id="pathForm" method="POST" class="flex flex-wrap gap-2 items-center">
+    <input type="hidden" name="action" value="list">
+
+    <!-- Back button (go to parent path) -->
+    <button
+      type="button"
+      id="backBtn"
+      class="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300">
+      ⬅ Up one level
+    </button>
+
+    <input
+      id="pathInput"
+      type="text"
+      name="path"
+      value="{{.CurrentPath}}"
+      class="w-full md:flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs
+             focus:outline-none focus:ring-1 focus:ring-cyan-400"
+      placeholder="Enter path, e.g. C:\"
+    >
+    <button
+      class="px-4 py-2 bg-cyan-500 text-slate-950 rounded-lg text-sm font-medium hover:bg-cyan-400">
+      Open
+    </button>
+  </form>
+
+  <!-- Files table -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+    <table class="min-w-full text-xs">
+      <thead class="bg-slate-900 text-slate-400">
+      <tr>
+        <th class="px-3 py-2 text-left">Name</th>
+        <th class="px-3 py-2 text-left">Size</th>
+        <th class="px-3 py-2 text-left">Modified</th>
+      </tr>
+      </thead>
+      <tbody>
+      {{range .Files}}
+        <tr
+          class="border-t border-slate-800 hover:bg-slate-800/70 cursor-pointer file-row"
+          data-path="{{.Path}}"
+        >
+          <td class="px-3 py-1.5">
+            {{if .IsDir}}
+              📁 {{.Name}}
+            {{else}}
+              📄 {{.Name}}
+            {{end}}
+          </td>
+          <td class="px-3 py-1.5">
+            {{if .IsDir}}
+              —
+            {{else}}
+              {{formatSize .Size}}
+            {{end}}
+          </td>
+          <td class="px-3 py-1.5">
+            {{.ModTime}}
+          </td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const rows = document.querySelectorAll('.file-row');
+    const pathInput = document.getElementById('pathInput');
+    const form = document.getElementById('pathForm');
+    const backBtn = document.getElementById('backBtn');
+
+    // Open folder/file when row clicked
+    rows.forEach(row => {
+      row.addEventListener('click', () => {
+        const targetPath = row.getAttribute('data-path');
+        if (!targetPath) return;
+        pathInput.value = targetPath;
+        form.submit();     // auto-open on click
+      });
+    });
+
+    // Compute parent path (works for C:\Users\Me and /home/user style)
+    function getParentPath(p) {
+      if (!p || p === "/" || p === "\\" ) return "/";
+
+      // normalise \ -> /
+      let s = p.replace(/\\/g, "/");
+
+      // drive root like C:/ or C:
+      if (/^[A-Za-z]:\/?$/.test(s)) {
+        return "/"; // go back to root (drive list)
+      }
+
+      if (s.endsWith("/")) s = s.slice(0, -1);
+      const idx = s.lastIndexOf("/");
+      if (idx <= 0) return "/";
+
+      return s.slice(0, idx + 1); // keep trailing /
+    }
+
+    // Back button: go to parent folder
+    backBtn.addEventListener('click', () => {
+      const current = pathInput.value || "/";
+      const parent = getParentPath(current);
+      pathInput.value = parent;
+      form.submit();
+    });
+  })();
+</script>
+
+</body>
+</html>
+{{end}}

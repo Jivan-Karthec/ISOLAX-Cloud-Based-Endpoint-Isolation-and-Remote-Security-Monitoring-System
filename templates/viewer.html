@@ -1,0 +1,202 @@
+{{define "viewer.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Isolax EDR • Viewer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .glass-card {
+      background: radial-gradient(circle at top left, rgba(34,211,238,0.14), transparent 60%),
+                  rgba(15,23,42,0.96);
+      backdrop-filter: blur(22px);
+    }
+    .grid-bg {
+      background-image:
+        linear-gradient(to right, rgba(30,64,175,0.25) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(30,64,175,0.2) 1px, transparent 1px);
+      background-size: 42px 42px;
+      opacity: 0.2;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+<div class="fixed inset-0 grid-bg"></div>
+
+<div class="relative flex flex-col min-h-screen">
+
+  <!-- TOP BAR -->
+  <header class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/80 backdrop-blur">
+    <div>
+      <div class="text-xs text-slate-400">Viewer</div>
+      <div class="text-lg font-semibold flex items-center gap-2">
+        Endpoint • <span class="text-cyan-300">{{.ClientID}}</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 text-xs">
+
+      {{if eq .Isolation "Isolated"}}
+      <span class="px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/60 text-red-300 flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>
+        Isolated
+      </span>
+      {{else}}
+      <span class="px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/60 text-emerald-300 flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        Normal
+      </span>
+      {{end}}
+
+      <a href="/" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-100">
+        ← Back
+      </a>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="flex-1 p-6 space-y-4">
+
+    <!-- ACTION BAR -->
+    <div class="glass-card border border-slate-800 rounded-2xl p-4 flex flex-wrap gap-3 items-center justify-between">
+
+      <div class="flex flex-wrap gap-2 items-center text-xs">
+        <span class="px-2 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-slate-300">
+          Client ID: <span class="text-cyan-300 font-medium">{{.ClientID}}</span>
+        </span>
+
+        <span class="px-2 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-slate-400">
+          Mode:
+          {{if eq .Isolation "Isolated"}}
+          <span class="text-red-400 font-medium">Isolax Isolation</span>
+          {{else}}
+          <span class="text-emerald-400 font-medium">Normal Connectivity</span>
+          {{end}}
+        </span>
+      </div>
+
+      <!-- BUTTONS -->
+      <div class="flex flex-wrap gap-2 items-center text-sm">
+
+        <!-- ISOLATE -->
+        <form method="get" action="/edr/action">
+          <input type="hidden" name="client" value="{{.ClientID}}">
+          <input type="hidden" name="type" value="isolate">
+          <button class="px-4 py-2 bg-red-500 text-slate-950 rounded-lg hover:bg-red-400">
+            Isolate
+          </button>
+        </form>
+
+        <!-- UNISOLATE -->
+        <form method="get" action="/edr/action">
+          <input type="hidden" name="client" value="{{.ClientID}}">
+          <input type="hidden" name="type" value="unisolate">
+          <button class="px-4 py-2 bg-emerald-500 text-slate-950 rounded-lg hover:bg-emerald-400">
+            Un-isolate
+          </button>
+        </form>
+
+        <!-- SHELL -->
+        <a href="/shell?client={{.ClientID}}"
+           class="px-4 py-2 bg-cyan-500 text-slate-950 rounded-lg hover:bg-cyan-400">
+          Shell
+        </a>
+
+        <!-- FILES -->
+        <a href="/files?client={{.ClientID}}"
+           class="px-4 py-2 bg-blue-500 text-slate-950 rounded-lg hover:bg-blue-400">
+          Files
+        </a>
+
+        <!-- PROCESSES -->
+        <a href="/processes?client={{.ClientID}}"
+           class="px-4 py-2 bg-amber-500 text-slate-950 rounded-lg hover:bg-amber-400">
+          Processes
+        </a>
+
+        <!-- SEPARATE SCREEN BUTTON -->
+        <button id="toggleScreen"
+                class="px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg hover:border-cyan-400">
+          Start Screen
+        </button>
+
+      </div>
+    </div>
+
+    <!-- SCREEN + HISTORY -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+      <!-- SCREEN -->
+      <div class="lg:col-span-2 glass-card border border-slate-800 rounded-2xl p-4">
+        <div id="screenContainer"
+             class="w-full h-[540px] bg-black border border-slate-800 rounded-xl flex items-center justify-center">
+          <div class="text-center text-slate-400 text-sm">
+            Screen preview disabled<br>
+            <span class="text-xs text-slate-500">Click <span class="text-cyan-400">Start Screen</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="glass-card border border-slate-800 rounded-2xl p-4 text-xs">
+        <div class="text-[11px] uppercase tracking-[0.18em] text-slate-400 mb-2">
+          Isolation History
+        </div>
+        <div class="max-h-[520px] overflow-y-auto space-y-1">
+          {{if .History}}
+          {{range .History}}
+          <div class="px-2 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-300">
+            {{.}}
+          </div>
+          {{end}}
+          {{else}}
+          <div class="text-slate-500 text-[11px]">No actions recorded.</div>
+          {{end}}
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const btn = document.getElementById("toggleScreen");
+  const box = document.getElementById("screenContainer");
+  let active = false;
+
+  btn.addEventListener("click", () => {
+    if (!active) {
+      const img = document.createElement("img");
+      img.src = "/stream?client={{.ClientID}}";
+      img.className = "w-full h-full object-contain rounded-xl";
+
+      box.innerHTML = "";
+      box.appendChild(img);
+
+      btn.textContent = "Stop Screen";
+      btn.classList.replace("bg-slate-900", "bg-red-600");
+
+      active = true;
+
+    } else {
+      box.innerHTML = `
+        <div class='text-center text-slate-400 text-sm'>
+          Screen stopped<br>
+          <span class='text-xs text-slate-500'>Click <span class='text-cyan-400'>Start Screen</span></span>
+        </div>
+      `;
+
+      btn.textContent = "Start Screen";
+      btn.classList.replace("bg-red-600", "bg-slate-900");
+
+      active = false;
+    }
+  });
+</script>
+
+</body>
+</html>
+{{end}}

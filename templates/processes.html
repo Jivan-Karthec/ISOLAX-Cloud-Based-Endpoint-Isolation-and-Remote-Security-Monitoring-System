@@ -1,0 +1,85 @@
+{{define "processes.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Isolax • Processes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<!-- Top bar -->
+<div class="p-4 border-b border-slate-800 flex justify-between items-center">
+  <h1 class="text-xl font-semibold text-cyan-400">Processes • {{.ClientID}}</h1>
+  <div class="flex items-center gap-3">
+    <!-- Refresh -->
+    <button onclick="location.reload()"
+            class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700
+                   text-slate-200 text-xs hover:bg-slate-800 hover:border-cyan-400">
+      ⟳ Refresh
+    </button>
+
+    <a href="/viewer?client={{.ClientID}}" class="text-slate-300 text-sm">
+      ← Back to Viewer
+    </a>
+  </div>
+</div>
+
+<div class="p-4 space-y-4">
+
+  <!-- Search bar -->
+  <input id="search" type="text" placeholder="Search process name..."
+         class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs
+                focus:outline-none focus:ring-1 focus:ring-cyan-400">
+
+  <!-- Table -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+    <table class="min-w-full text-xs" id="procTable">
+      <thead class="bg-slate-900 text-slate-400">
+      <tr>
+        <th class="px-3 py-2 text-left">PID</th>
+        <th class="px-3 py-2 text-left">Name</th>
+        <th class="px-3 py-2 text-left">Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      {{range .Processes}}
+        <tr class="border-t border-slate-800 hover:bg-slate-800/70">
+          <td class="px-3 py-1.5">{{.PID}}</td>
+          <td class="px-3 py-1.5 proc-name">{{.Name}}</td>
+          <td class="px-3 py-1.5">
+            <form method="POST" style="display:inline;">
+              <input type="hidden" name="action" value="kill">
+              <input type="hidden" name="pid" value="{{.PID}}">
+              <button type="submit"
+                      class="px-3 py-1 rounded-lg bg-red-500 text-slate-950 text-[11px] font-medium hover:bg-red-400">
+                Kill
+              </button>
+            </form>
+          </td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const input = document.getElementById("search");
+    const rows = document.querySelectorAll("#procTable tbody tr");
+
+    input.addEventListener("input", () => {
+      const q = input.value.toLowerCase();
+      rows.forEach(r => {
+        const nameCell = r.querySelector(".proc-name");
+        const name = nameCell ? nameCell.innerText.toLowerCase() : "";
+        r.style.display = name.includes(q) ? "" : "none";
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
+{{end}}

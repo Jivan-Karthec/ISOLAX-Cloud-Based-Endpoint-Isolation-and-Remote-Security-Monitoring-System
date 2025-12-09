@@ -1,0 +1,33 @@
+{{define "shell.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Isolax • Shell</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<div class="p-4 border-b border-slate-800 flex justify-between items-center">
+  <h1 class="text-xl font-semibold text-cyan-400">Shell • {{.ClientID}}</h1>
+  <a href="/viewer?client={{.ClientID}}" class="text-slate-300 text-sm">← Back to Viewer</a>
+</div>
+
+<div class="p-4 space-y-4">
+  <pre class="p-4 bg-slate-900 border border-slate-800 rounded-xl text-xs whitespace-pre-wrap max-h-[70vh] overflow-auto">
+{{.History}}
+  </pre>
+
+  <form method="POST" class="flex flex-wrap gap-2 items-center">
+    <input type="text" name="command" placeholder="Enter command..."
+           class="w-full md:w-2/3 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs
+                  focus:outline-none focus:ring-1 focus:ring-cyan-400">
+    <button class="px-4 py-2 bg-cyan-500 text-slate-900 rounded-lg text-sm">Run</button>
+    <button name="clear" value="1"
+            class="px-3 py-2 bg-red-500 text-slate-900 rounded-lg text-xs">Clear</button>
+  </form>
+</div>
+
+</body>
+</html>
+{{end}}
